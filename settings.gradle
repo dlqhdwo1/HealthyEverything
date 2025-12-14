@@ -1,0 +1,4 @@
+rootProject.name = 'HealthyEverything'
+
+include 'HealthyEverything-api'
+include 'HealthyEverything-Batch'

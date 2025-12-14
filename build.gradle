@@ -1,0 +1,42 @@
+plugins { // 플러그인 적용
+    id 'java'
+    id 'org.springframework.boot' version '4.0.0'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+description = 'HealthyEverything'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories { //저장소선언
+    mavenCentral() // Spring, Lombok , JUnit 모두 여기서 내려받음
+} // 라이브러리 어디서 받을지
+
+dependencies { //외부 라이브러리/모듈 종속성 선언
+    implementation 'org.springframework.boot:spring-boot-starter'
+    compileOnly 'org.projectlombok:lombok' //컴파일 할때만 필요
+    developmentOnly 'org.springframework.boot:spring-boot-devtools' //개발 환경에서만 사용
+    annotationProcessor 'org.projectlombok:lombok' //어노테이션 처리기 등록
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+
+//루트 프로젝트의 build.gradle 파일은 일반적으로 프로젝트 전반에 적용될 공통 설정이나 컨벤션을 정의하는데 사용되며,
+//소스 파일을 두지 않는 것이권장되는 모범사례임.
