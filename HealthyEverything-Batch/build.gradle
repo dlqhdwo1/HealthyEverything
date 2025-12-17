@@ -1,29 +1,7 @@
 plugins {
-    id 'java'
-    id 'org.springframework.boot' version '4.0.0'
-    id 'io.spring.dependency-management' version '1.1.7'
+    // buildSrc에 정의된 컨벤션 플러그인을 ID를 사용하여 적용
+    id 'springboot-common'
 }
 
-group = 'com.example'
-version = '0.0.1-SNAPSHOT'
+// 이 값은 모듈별로 다르므로 여기서 정의합니다.
 description = 'HealthyEverything-Batch'
-
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(25)
-    }
-}
-
-repositories {
-    mavenCentral()
-}
-
-dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter'
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-}
-
-tasks.named('test') {
-    useJUnitPlatform()
-}
