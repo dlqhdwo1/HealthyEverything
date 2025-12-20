@@ -1,4 +1,4 @@
-package com.example.healthyeverythingapi.dto;
+package com.example.healthyeverythingapi.auth.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -9,7 +9,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @AllArgsConstructor
-public class SignupRequest {
+public class LoginRequest {
 
     @NotBlank
     @Email
@@ -17,8 +17,5 @@ public class SignupRequest {
 
     @NotBlank
     private String password;
-
-    @NotBlank
-    private String name;
 
 }
