@@ -1,4 +1,4 @@
-package com.example.healthyeverythingapi.exception;
+package com.example.healthyeverythingapi.common.exception;
 
 public class InvalidCredentialsException extends RuntimeException {
 

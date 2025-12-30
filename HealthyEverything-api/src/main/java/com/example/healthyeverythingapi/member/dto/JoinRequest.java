@@ -1,6 +1,8 @@
 package com.example.healthyeverythingapi.member.dto;
 
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -10,11 +12,12 @@ import lombok.Setter;
 @AllArgsConstructor
 public class JoinRequest {
 
-    @NotBlank
+    @Email @NotBlank
     private String userid;
 
-    @NotBlank
-    private String phonenumber;
+    @NotBlank @Size(min = 8, max = 50)
+    private String password;
 
-
+    @NotBlank @Size(max = 30)
+    private String name;
 }

@@ -2,10 +2,12 @@ package com.example.healthyeverythingapi.proposal.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
+@NoArgsConstructor
 @AllArgsConstructor
 public class ProposalResponse {
 
@@ -15,6 +17,7 @@ public class ProposalResponse {
 
     @Getter
     @Setter
+    @NoArgsConstructor
     @AllArgsConstructor
     public static class Data {
         private Long requestid;
