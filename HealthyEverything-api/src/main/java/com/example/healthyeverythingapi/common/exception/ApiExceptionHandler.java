@@ -1,13 +1,12 @@
-package com.example.healthyeverythingapi.exception;
+package com.example.healthyeverythingapi.common.exception;
 
 import com.example.healthyeverythingapi.search.controller.SearchController;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.validation.FieldError;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -62,9 +61,6 @@ public class ApiExceptionHandler {
                 ));
     }
 
-
-
-
     @ExceptionHandler(Exception.class)
     public ResponseEntity<?> handleAny(Exception e) {
         String msg = e.getMessage() == null ? "" : e.getMessage();
@@ -78,8 +74,6 @@ public class ApiExceptionHandler {
             );
         }
 
-
-
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                 Map.of(
                         "success", false,
@@ -88,15 +82,10 @@ public class ApiExceptionHandler {
         );
     }
 
-
     @ExceptionHandler(SearchController.TrainerNotFoundException.class)
     public ResponseEntity<?> handleTrainerNotFound(RuntimeException e) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                 Map.of("success", false, "message", "TRAINER_NOT_FOUND")
         );
     }
-
-
-
-
 }
