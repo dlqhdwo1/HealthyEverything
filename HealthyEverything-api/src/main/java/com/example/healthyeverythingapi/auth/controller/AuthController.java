@@ -4,7 +4,8 @@ import com.example.healthyeverythingapi.auth.dto.AuthResponses;
 import com.example.healthyeverythingapi.auth.dto.LoginRequest;
 import com.example.healthyeverythingapi.auth.dto.RefreshTokenRequest;
 import com.example.healthyeverythingapi.auth.service.AuthService;
-import com.example.healthyeverythingapi.common.exception.InvalidCredentialsException;
+import com.example.healthyeverythingapi.common.exception.InvalidRefreshTokenException;
+import com.example.healthyeverythingapi.member.dto.JoinRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -19,13 +20,15 @@ public class AuthController {
 
     private final AuthService authService;
 
+    @PostMapping("/signup")
+    @ResponseStatus(HttpStatus.CREATED)
+    public AuthResponses.SignupResponse signup(@Valid @RequestBody JoinRequest request) {
+        return authService.signup(request);
+    }
+
     @PostMapping("/login")
     public AuthResponses.LoginResponse login(@Valid @RequestBody LoginRequest request) {
-        try {
-            return authService.login(request);
-        } catch (IllegalArgumentException e) {
-            throw new InvalidCredentialsException();
-        }
+        return authService.login(request);
     }
 
     @PostMapping("/token/refresh")
@@ -33,7 +36,7 @@ public class AuthController {
     public Map<String, Object> reissue(@Valid @RequestBody RefreshTokenRequest request) {
 
         if ("invalid".equals(request.getRefreshToken())) {
-            throw new RuntimeException("INVALID_REFRESH_TOKEN");
+            throw new InvalidRefreshTokenException();
         }
 
         return Map.of(

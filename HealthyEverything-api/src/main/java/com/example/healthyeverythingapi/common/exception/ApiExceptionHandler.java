@@ -35,6 +35,16 @@ public class ApiExceptionHandler {
                 ));
     }
 
+    @ExceptionHandler(InvalidRefreshTokenException.class)
+    public ResponseEntity<?> handleInvalidRefreshToken(InvalidRefreshTokenException e) {
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of(
+                        "success", false,
+                        "message", "INVALID_REFRESH_TOKEN"
+                ));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<?> handleValidation(MethodArgumentNotValidException e) {
         Map<String, String> errors = new HashMap<>();
@@ -63,17 +73,6 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<?> handleAny(Exception e) {
-        String msg = e.getMessage() == null ? "" : e.getMessage();
-
-        if ("INVALID_REFRESH_TOKEN".equals(msg)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
-                    Map.of(
-                            "success", false,
-                            "message", "INVALID_REFRESH_TOKEN"
-                    )
-            );
-        }
-
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                 Map.of(
                         "success", false,

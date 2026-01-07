@@ -20,3 +20,6 @@ spring:
 logging:
   level:
     org.hibernate.SQL: debug
+    org.springframework.transaction: trace
+    org.springframework.transaction.interceptor: trace
+    org.springframework.orm.jpa: debug
