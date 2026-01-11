@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HealthyEverything - 나에게 맞는 트레이너 찾기</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        /* 네비게이션 */
+        .navbar {
+            background: white;
+            padding: 16px 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: #ff6b35;
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #666;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: #ff6b35;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .btn-outline {
+            background: white;
+            border: 1px solid #ddd;
+            color: #333;
+        }
+
+        .btn-primary {
+            background: #ff6b35;
+            border: none;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #e55a2b;
+        }
+
+        /* 히어로 섹션 */
+        .hero {
+            background: linear-gradient(135deg, #ff6b35 0%, #ff8c5a 100%);
+            padding: 80px 24px;
+            text-align: center;
+            color: white;
+        }
+
+        .hero h1 {
+            font-size: 42px;
+            margin-bottom: 16px;
+            font-weight: 700;
+        }
+
+        .hero p {
+            font-size: 18px;
+            opacity: 0.9;
+            margin-bottom: 32px;
+        }
+
+        /* 검색 바 */
+        .search-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .search-box {
+            display: flex;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+
+        .search-box input {
+            flex: 1;
+            padding: 18px 24px;
+            border: none;
+            font-size: 16px;
+            outline: none;
+        }
+
+        .search-box button {
+            padding: 18px 32px;
+            background: #333;
+            color: white;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .search-box button:hover {
+            background: #555;
+        }
+
+        /* 필터 섹션 */
+        .filters {
+            background: white;
+            padding: 20px 24px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .filter-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 10px 20px;
+            background: #f5f5f5;
+            border: 1px solid #e0e0e0;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            background: #ff6b35;
+            color: white;
+            border-color: #ff6b35;
+        }
+
+        /* 트레이너 그리드 */
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 24px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .trainer-count {
+            color: #888;
+            font-size: 14px;
+        }
+
+        .trainer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 24px;
+        }
+
+        /* 트레이너 카드 */
+        .trainer-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+
+        .trainer-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        }
+
+        .trainer-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .trainer-info {
+            padding: 20px;
+        }
+
+        .trainer-name {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .trainer-specialty {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .specialty-tag {
+            padding: 4px 10px;
+            background: #fff3ef;
+            color: #ff6b35;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .trainer-location {
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .trainer-location::before {
+            content: "📍 ";
+        }
+
+        .trainer-price {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .trainer-price span {
+            font-size: 14px;
+            color: #888;
+            font-weight: 400;
+        }
+
+        .trainer-rating {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .rating-star {
+            color: #ffc107;
+        }
+
+        .rating-value {
+            font-weight: 600;
+        }
+
+        .rating-count {
+            color: #888;
+            font-size: 14px;
+        }
+
+        /* 빈 상태 */
+        .empty-state {
+            text-align: center;
+            padding: 80px 24px;
+            color: #888;
+        }
+
+        .empty-state h3 {
+            font-size: 20px;
+            margin-bottom: 12px;
+            color: #333;
+        }
+
+        /* 푸터 */
+        .footer {
+            background: #333;
+            color: white;
+            padding: 48px 24px;
+            margin-top: 80px;
+        }
+
+        .footer-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 40px;
+        }
+
+        .footer-section h4 {
+            font-size: 16px;
+            margin-bottom: 16px;
+            color: #ff6b35;
+        }
+
+        .footer-section p, .footer-section a {
+            color: #aaa;
+            font-size: 14px;
+            line-height: 2;
+            text-decoration: none;
+            display: block;
+        }
+
+        .footer-section a:hover {
+            color: white;
+        }
+
+        .footer-bottom {
+            max-width: 1200px;
+            margin: 40px auto 0;
+            padding-top: 24px;
+            border-top: 1px solid #444;
+            text-align: center;
+            color: #888;
+            font-size: 14px;
+        }
+
+        /* 반응형 */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .hero h1 {
+                font-size: 28px;
+            }
+
+            .hero p {
+                font-size: 16px;
+            }
+
+            .trainer-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- 네비게이션 -->
+<nav class="navbar">
+    <div class="nav-container">
+        <a href="/" class="logo">HealthyEverything</a>
+        <div class="nav-links">
+            <a href="/">트레이너 찾기</a>
+            <a href="#">센터 찾기</a>
+            <a href="#">PT 후기</a>
+            <a href="/chat" id="chat-link" style="display: none;">채팅</a>
+        </div>
+        <div class="nav-buttons" id="authButtons">
+            <!-- 비로그인 상태 -->
+            <div id="guest-buttons">
+                <a href="/login" class="btn btn-outline">로그인</a>
+                <a href="/signup" class="btn btn-primary">회원가입</a>
+            </div>
+            <!-- 로그인 상태 -->
+            <div id="user-buttons" style="display: none;">
+                <span id="user-name" style="margin-right: 12px; font-weight: 500;"></span>
+                <button onclick="logout()" class="btn btn-outline">로그아웃</button>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- 히어로 섹션 -->
+<section class="hero">
+    <h1>나에게 딱 맞는 트레이너를 찾아보세요</h1>
+    <p>검증된 전문 트레이너와 함께 건강한 변화를 시작하세요</p>
+    <div class="search-container">
+        <form class="search-box" action="/search" method="get">
+            <input type="text" name="keyword" th:value="${keyword}" placeholder="지역, 트레이너 이름으로 검색해보세요">
+            <button type="submit">검색</button>
+        </form>
+    </div>
+</section>
+
+<!-- 필터 -->
+<section class="filters">
+    <div class="filter-container">
+        <button class="filter-btn active">전체</button>
+        <button class="filter-btn">다이어트</button>
+        <button class="filter-btn">근력 강화</button>
+        <button class="filter-btn">체형 교정</button>
+        <button class="filter-btn">재활 운동</button>
+        <button class="filter-btn">시니어 운동</button>
+        <button class="filter-btn">여성 전문</button>
+    </div>
+</section>
+
+<!-- 메인 콘텐츠 -->
+<main class="main-content">
+    <div class="section-header">
+        <h2 class="section-title" th:if="${keyword == ''}">추천 트레이너</h2>
+        <h2 class="section-title" th:if="${keyword != ''}">
+            '<span th:text="${keyword}"></span>' 검색 결과
+        </h2>
+        <span class="trainer-count">총 <strong th:text="${#lists.size(trainers)}">0</strong>명의 트레이너</span>
+    </div>
+
+    <!-- 트레이너 있을 때 -->
+    <div class="trainer-grid" th:if="${#lists.size(trainers) > 0}">
+        <div class="trainer-card" th:each="trainer : ${trainers}">
+            <img th:src="${trainer.profileImage != null ? trainer.profileImage : ''}"
+                 alt="트레이너 프로필"
+                 class="trainer-image"
+                 onerror="this.style.background='linear-gradient(135deg, #667eea 0%, #764ba2 100%)'; this.src='';">
+            <div class="trainer-info">
+                <h3 class="trainer-name" th:text="${trainer.name}">트레이너 이름</h3>
+                <div class="trainer-specialty">
+                    <span class="specialty-tag">PT</span>
+                    <span class="specialty-tag" th:if="${trainer.certificate != null}">자격증 보유</span>
+                </div>
+                <p class="trainer-location" th:text="${trainer.gymLocate != null ? trainer.gymLocate : '위치 정보 없음'}">강남구</p>
+                <p class="trainer-price">
+                    <span th:text="${trainer.price != null ? trainer.price : '가격 문의'}">50,000원</span>
+                    <span>/회</span>
+                </p>
+                <div class="trainer-rating">
+                    <span class="rating-star">★</span>
+                    <span class="rating-value" th:text="${trainer.rating != null ? trainer.rating : '5.0'}">5.0</span>
+                    <span class="rating-count">(리뷰 12개)</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 트레이너 없을 때 -->
+    <div class="empty-state" th:if="${#lists.size(trainers) == 0}">
+        <h3>검색 결과가 없습니다</h3>
+        <p>다른 검색어로 다시 시도해보세요</p>
+    </div>
+</main>
+
+<!-- 푸터 -->
+<footer class="footer">
+    <div class="footer-container">
+        <div class="footer-section">
+            <h4>HealthyEverything</h4>
+            <p>나에게 맞는 트레이너를 찾고<br>건강한 라이프스타일을 시작하세요.</p>
+        </div>
+        <div class="footer-section">
+            <h4>서비스</h4>
+            <a href="#">트레이너 찾기</a>
+            <a href="#">센터 찾기</a>
+            <a href="#">PT 후기</a>
+        </div>
+        <div class="footer-section">
+            <h4>고객지원</h4>
+            <a href="#">자주 묻는 질문</a>
+            <a href="#">1:1 문의</a>
+            <a href="#">이용약관</a>
+        </div>
+        <div class="footer-section">
+            <h4>연락처</h4>
+            <p>이메일: support@healthy.com</p>
+            <p>전화: 02-1234-5678</p>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <p>&copy; 2025 HealthyEverything. All rights reserved.</p>
+    </div>
+</footer>
+
+<script>
+    // 로그인 상태 확인
+    function checkAuth() {
+        const accessToken = localStorage.getItem('accessToken');
+        const user = localStorage.getItem('user');
+
+        if (accessToken && user) {
+            const userData = JSON.parse(user);
+            document.getElementById('guest-buttons').style.display = 'none';
+            document.getElementById('user-buttons').style.display = 'flex';
+            document.getElementById('user-name').textContent = userData.name + '님';
+            document.getElementById('chat-link').style.display = 'inline';
+        } else {
+            document.getElementById('guest-buttons').style.display = 'flex';
+            document.getElementById('user-buttons').style.display = 'none';
+            document.getElementById('chat-link').style.display = 'none';
+        }
+    }
+
+    // 로그아웃
+    function logout() {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('user');
+        window.location.reload();
+    }
+
+    // 페이지 로드시 확인
+    window.onload = checkAuth;
+</script>
+
+</body>
+</html>

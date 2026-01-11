@@ -52,7 +52,6 @@ public class ProposalService {
         );
     }
 
-    @Transactional(readOnly = true)
     public TrainerReceivedProposalResponse getTrainerProposals(String status, String region) {
         if (status == null || status.isBlank() || region == null || region.isBlank()) {
             throw new IllegalArgumentException("INVALID_REQUEST");
@@ -72,7 +71,6 @@ public class ProposalService {
         return new TrainerReceivedProposalResponse(contents);
     }
 
-    @Transactional(readOnly = true)
     public TrainerReceivedProposalDetailResponse getProposalDetail(String requestId) {
         if (requestId == null || requestId.isBlank()) {
             throw new IllegalArgumentException("INVALID_REQUEST");

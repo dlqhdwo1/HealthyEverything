@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>채팅 - HealthyEverything</title>
+    <!-- SockJS & STOMP -->
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: #f5f5f5;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .navbar {
+            background: white;
+            padding: 16px 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: #ff6b35;
+            text-decoration: none;
+        }
+
+        .nav-buttons a {
+            padding: 10px 20px;
+            background: #ff6b35;
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .connection-status {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 12px;
+        }
+
+        .connection-status.connected {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .connection-status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .chat-container {
+            display: flex;
+            flex: 1;
+            max-width: 1200px;
+            margin: 20px auto;
+            width: 100%;
+            gap: 20px;
+            padding: 0 20px;
+        }
+
+        .user-list {
+            width: 300px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+
+        .user-list-header {
+            background: #ff6b35;
+            color: white;
+            padding: 16px 20px;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .user-list-content {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .user-item {
+            padding: 16px 20px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .user-item:hover {
+            background: #fff3ef;
+        }
+
+        .user-item.active {
+            background: #fff3ef;
+            border-left: 3px solid #ff6b35;
+        }
+
+        .user-item .name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .user-item .email {
+            font-size: 12px;
+            color: #888;
+            margin-top: 4px;
+        }
+
+        .chat-area {
+            flex: 1;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: #f8f9fa;
+            padding: 16px 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .chat-header .partner-name {
+            font-weight: 600;
+            font-size: 18px;
+            color: #333;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .message {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 16px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .message.sent {
+            background: #ff6b35;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.received {
+            background: #f0f0f0;
+            color: #333;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+
+        .message .time {
+            font-size: 11px;
+            opacity: 0.7;
+            margin-top: 4px;
+        }
+
+        .message.sent .time {
+            text-align: right;
+        }
+
+        .chat-input-area {
+            padding: 16px 20px;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            gap: 12px;
+        }
+
+        .chat-input-area input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 24px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .chat-input-area input:focus {
+            border-color: #ff6b35;
+        }
+
+        .chat-input-area button {
+            padding: 12px 24px;
+            background: #ff6b35;
+            color: white;
+            border: none;
+            border-radius: 24px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .chat-input-area button:hover {
+            background: #e55a2b;
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #888;
+        }
+
+        .empty-state h3 {
+            margin-bottom: 8px;
+            color: #666;
+        }
+
+        .no-login {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            gap: 20px;
+        }
+
+        .no-login h2 {
+            color: #333;
+        }
+
+        .no-login a {
+            padding: 12px 32px;
+            background: #ff6b35;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+<div id="no-login" class="no-login" style="display: none;">
+    <h2>로그인이 필요합니다</h2>
+    <a href="/login">로그인하기</a>
+</div>
+
+<div id="main-content" style="display: none; flex-direction: column; height: 100vh;">
+    <nav class="navbar">
+        <a href="/" class="logo">HealthyEverything</a>
+        <div class="nav-buttons">
+            <span id="connectionStatus" class="connection-status disconnected">연결 끊김</span>
+            <a href="/">홈으로</a>
+        </div>
+    </nav>
+
+    <div class="chat-container">
+        <div class="user-list">
+            <div class="user-list-header">채팅 가능한 유저</div>
+            <div class="user-list-content" id="userList">
+                <!-- 유저 목록이 여기에 로드됨 -->
+            </div>
+        </div>
+
+        <div class="chat-area">
+            <div class="chat-header" id="chatHeader" style="display: none;">
+                <span class="partner-name" id="partnerName"></span>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                <div class="empty-state" id="emptyState">
+                    <h3>채팅 상대를 선택하세요</h3>
+                    <p>왼쪽 목록에서 채팅할 유저를 선택해주세요</p>
+                </div>
+            </div>
+            <div class="chat-input-area" id="chatInputArea" style="display: none;">
+                <input type="text" id="messageInput" placeholder="메시지를 입력하세요..." />
+                <button onclick="sendMessage()">전송</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentPartnerId = null;
+    let currentPartnerName = null;
+    let currentUserId = null;
+    let stompClient = null;
+
+    // 페이지 로드 시 로그인 확인 및 WebSocket 연결
+    window.onload = function() {
+        const accessToken = localStorage.getItem('accessToken');
+        const user = localStorage.getItem('user');
+
+        if (!accessToken || !user) {
+            document.getElementById('no-login').style.display = 'flex';
+            document.getElementById('main-content').style.display = 'none';
+            return;
+        }
+
+        const userData = JSON.parse(user);
+        currentUserId = userData.id;
+
+        document.getElementById('no-login').style.display = 'none';
+        document.getElementById('main-content').style.display = 'flex';
+
+        loadUsers();
+        connectWebSocket();
+    };
+
+    // WebSocket 연결
+    function connectWebSocket() {
+        const socket = new SockJS('/ws-chat');
+        stompClient = Stomp.over(socket);
+
+        // 디버그 로그 비활성화
+        stompClient.debug = null;
+
+        stompClient.connect({}, function(frame) {
+            console.log('WebSocket 연결됨');
+            updateConnectionStatus(true);
+
+            // 현재 사용자의 메시지 구독
+            stompClient.subscribe('/topic/chat/' + currentUserId, function(message) {
+                const chatMessage = JSON.parse(message.body);
+                onMessageReceived(chatMessage);
+            });
+        }, function(error) {
+            console.error('WebSocket 연결 실패:', error);
+            updateConnectionStatus(false);
+            // 5초 후 재연결 시도
+            setTimeout(connectWebSocket, 5000);
+        });
+    }
+
+    // 연결 상태 UI 업데이트
+    function updateConnectionStatus(connected) {
+        const statusEl = document.getElementById('connectionStatus');
+        if (connected) {
+            statusEl.textContent = '실시간 연결됨';
+            statusEl.className = 'connection-status connected';
+        } else {
+            statusEl.textContent = '연결 끊김';
+            statusEl.className = 'connection-status disconnected';
+        }
+    }
+
+    // 메시지 수신 처리
+    function onMessageReceived(message) {
+        // 현재 대화 상대의 메시지인 경우에만 화면에 표시
+        if (currentPartnerId &&
+            (message.senderId === currentPartnerId || message.receiverId === currentPartnerId)) {
+            appendMessage(message);
+        }
+    }
+
+    // 메시지를 화면에 추가
+    function appendMessage(message) {
+        const chatMessages = document.getElementById('chatMessages');
+        const emptyState = document.getElementById('emptyState');
+
+        if (emptyState) {
+            emptyState.style.display = 'none';
+        }
+
+        const isSent = message.senderId === currentUserId;
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message ' + (isSent ? 'sent' : 'received');
+        messageDiv.innerHTML = `
+            <div>${message.content}</div>
+            <div class="time">${message.createdAt}</div>
+        `;
+        chatMessages.appendChild(messageDiv);
+
+        // 스크롤 맨 아래로
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // 유저 목록 로드
+    async function loadUsers() {
+        const accessToken = localStorage.getItem('accessToken');
+
+        try {
+            const response = await fetch('/api/chat/users', {
+                headers: {
+                    'Authorization': 'Bearer ' + accessToken
+                }
+            });
+
+            if (response.ok) {
+                const users = await response.json();
+                renderUserList(users);
+            } else {
+                console.error('Failed to load users');
+            }
+        } catch (error) {
+            console.error('Error loading users:', error);
+        }
+    }
+
+    // 유저 목록 렌더링
+    function renderUserList(users) {
+        const userList = document.getElementById('userList');
+
+        if (users.length === 0) {
+            userList.innerHTML = '<div style="padding: 20px; text-align: center; color: #888;">채팅 가능한 유저가 없습니다</div>';
+            return;
+        }
+
+        userList.innerHTML = users.map(user => `
+            <div class="user-item" onclick="selectUser(${user.id}, '${user.name}')" id="user-${user.id}">
+                <div class="name">${user.name}</div>
+                <div class="email">${user.email}</div>
+            </div>
+        `).join('');
+    }
+
+    // 유저 선택
+    function selectUser(partnerId, partnerName) {
+        currentPartnerId = partnerId;
+        currentPartnerName = partnerName;
+
+        // 선택 표시
+        document.querySelectorAll('.user-item').forEach(el => el.classList.remove('active'));
+        document.getElementById('user-' + partnerId).classList.add('active');
+
+        // 채팅 UI 표시
+        document.getElementById('chatHeader').style.display = 'block';
+        document.getElementById('partnerName').textContent = partnerName;
+        document.getElementById('chatInputArea').style.display = 'flex';
+        document.getElementById('emptyState').style.display = 'none';
+
+        // 기존 메시지 로드 (HTTP로 한번만)
+        loadMessages();
+    }
+
+    // 메시지 로드 (초기 로드용)
+    async function loadMessages() {
+        if (!currentPartnerId) return;
+
+        const accessToken = localStorage.getItem('accessToken');
+
+        try {
+            const response = await fetch('/api/chat/messages/' + currentPartnerId, {
+                headers: {
+                    'Authorization': 'Bearer ' + accessToken
+                }
+            });
+
+            if (response.ok) {
+                const messages = await response.json();
+                renderMessages(messages);
+            }
+        } catch (error) {
+            console.error('Error loading messages:', error);
+        }
+    }
+
+    // 메시지 렌더링
+    function renderMessages(messages) {
+        const chatMessages = document.getElementById('chatMessages');
+
+        if (messages.length === 0) {
+            chatMessages.innerHTML = '<div class="empty-state"><h3>아직 메시지가 없습니다</h3><p>첫 메시지를 보내보세요!</p></div>';
+            return;
+        }
+
+        chatMessages.innerHTML = messages.map(msg => {
+            const isSent = msg.senderId === currentUserId;
+            return `
+                <div class="message ${isSent ? 'sent' : 'received'}">
+                    <div>${msg.content}</div>
+                    <div class="time">${msg.createdAt}</div>
+                </div>
+            `;
+        }).join('');
+
+        // 스크롤 맨 아래로
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // 메시지 전송 (WebSocket)
+    function sendMessage() {
+        const input = document.getElementById('messageInput');
+        const content = input.value.trim();
+
+        if (!content || !currentPartnerId || !stompClient) return;
+
+        const message = {
+            senderId: currentUserId,
+            receiverId: currentPartnerId,
+            content: content
+        };
+
+        stompClient.send('/app/chat.send', {}, JSON.stringify(message));
+        input.value = '';
+    }
+
+    // Enter 키로 메시지 전송
+    document.addEventListener('DOMContentLoaded', function() {
+        const input = document.getElementById('messageInput');
+        if (input) {
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+        }
+    });
+
+    // 페이지 종료 시 WebSocket 연결 해제
+    window.onbeforeunload = function() {
+        if (stompClient) {
+            stompClient.disconnect();
+        }
+    };
+</script>
+
+</body>
+</html>

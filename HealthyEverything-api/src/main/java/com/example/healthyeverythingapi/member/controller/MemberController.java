@@ -1,13 +1,8 @@
 package com.example.healthyeverythingapi.member.controller;
 
-import com.example.healthyeverythingapi.auth.dto.AuthResponses;
-import com.example.healthyeverythingapi.auth.service.AuthService;
 import com.example.healthyeverythingapi.member.dto.*;
 import com.example.healthyeverythingapi.member.service.MemberService;
-import com.example.healthyeverythingapi.common.exception.DuplicateEmailException;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -15,21 +10,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class MemberController {
 
-    private final AuthService authService;
     private final MemberService memberService;
-
-    @PostMapping("/join")
-    @ResponseStatus(HttpStatus.CREATED)
-    public AuthResponses.SignupResponse signup(@Valid @RequestBody JoinRequest request) {
-        try {
-            return authService.signup(request);
-        } catch (IllegalArgumentException e) {
-            if ("DUPLICATE_EMAIL".equals(e.getMessage())) {
-                throw new DuplicateEmailException();
-            }
-            throw e;
-        }
-    }
 
     @GetMapping("/mypage")
     public MyPageResponse mypageinfo(@RequestHeader(value = "Authorization", required = false) String authorization) {
