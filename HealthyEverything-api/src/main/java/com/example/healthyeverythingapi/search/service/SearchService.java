@@ -4,11 +4,8 @@ import com.example.healthyeverythingapi.common.exception.InvalidCredentialsExcep
 import com.example.healthyeverythingapi.search.domain.Center;
 import com.example.healthyeverythingapi.search.domain.Trainer;
 import com.example.healthyeverythingapi.search.dto.*;
-import com.example.healthyeverythingapi.search.repository.CenterRepository;
-import com.example.healthyeverythingapi.search.repository.TrainerRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -16,12 +13,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SearchService {
 
-    private final TrainerRepository trainerRepository;
-    private final CenterRepository centerRepository;
+    private final TrainerService trainerService;
+    private final CenterService centerService;
 
-    @Transactional(readOnly = true)
     public PTSearchResponse searchTrainer(PTSearchRequest request) {
-        return trainerRepository.findBySearchKeyword(request.getSearchKeyword())
+        return trainerService.findBySearchKeyword(request.getSearchKeyword())
                 .map(trainer -> new PTSearchResponse(
                         "SUCCESS",
                         "코치 목록 조회에 성공했습니다.",
@@ -42,10 +38,8 @@ public class SearchService {
                 ));
     }
 
-    @Transactional(readOnly = true)
     public TrainerDetailResponse getTrainerDetail(Long trainerId) {
-        Trainer trainer = trainerRepository.findById(trainerId)
-                .orElseThrow(() -> new IllegalArgumentException("TRAINER_NOT_FOUND"));
+        Trainer trainer = trainerService.findById(trainerId);
 
         return new TrainerDetailResponse(
                 trainer.getName(),
@@ -57,13 +51,12 @@ public class SearchService {
         );
     }
 
-    @Transactional(readOnly = true)
     public RecentTrainerResponse getRecentTrainers(Integer limit) {
         if (limit <= 0) {
             throw new IllegalArgumentException("INVALID_REQUEST");
         }
 
-        List<Trainer> trainers = trainerRepository.findAll();
+        List<Trainer> trainers = trainerService.findAll();
         List<RecentTrainerResponse.RecentTrainer> recentTrainers = trainers.stream()
                 .limit(limit)
                 .map(t -> new RecentTrainerResponse.RecentTrainer(
@@ -81,9 +74,8 @@ public class SearchService {
         );
     }
 
-    @Transactional(readOnly = true)
     public CenterInfoResponse searchCenter(String keyword) {
-        List<Center> centers = centerRepository.findByNameContaining(keyword);
+        List<Center> centers = centerService.findByNameContaining(keyword);
 
         List<CenterInfoResponse.Center> centerList = centers.stream()
                 .map(c -> new CenterInfoResponse.Center(
@@ -101,14 +93,12 @@ public class SearchService {
         );
     }
 
-    @Transactional(readOnly = true)
     public CenterDetailResponse getCenterDetail(String centerId) {
         if (centerId.isBlank() || "0".equals(centerId)) {
             throw new IllegalArgumentException("INVALID_REQUEST");
         }
 
-        Center center = centerRepository.findById(Long.parseLong(centerId))
-                .orElseThrow(() -> new IllegalArgumentException("CENTER_NOT_FOUND"));
+        Center center = centerService.findById(Long.parseLong(centerId));
 
         return new CenterDetailResponse(
                 center.getProfileImage(),
@@ -119,13 +109,12 @@ public class SearchService {
         );
     }
 
-    @Transactional(readOnly = true)
     public TrainerCertificateResponse getTrainerCertificate(String trainerName) {
         if (trainerName == null || trainerName.isBlank()) {
             throw new IllegalArgumentException("INVALID_REQUEST");
         }
 
-        List<Trainer> trainers = trainerRepository.findByNameContaining(trainerName);
+        List<Trainer> trainers = trainerService.findByNameContaining(trainerName);
 
         List<TrainerCertificateResponse.TrainerData> data = trainers.stream()
                 .map(t -> new TrainerCertificateResponse.TrainerData(

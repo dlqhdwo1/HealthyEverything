@@ -1,4 +1,13 @@
 spring:
+  profiles:
+    active: mysql
+
+---
+# 로컬 개발 환경 (H2)
+spring:
+  config:
+    activate:
+      on-profile: local
   datasource:
     url: jdbc:h2:mem:testdb;MODE=MYSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
     driver-class-name: org.h2.Driver
@@ -17,9 +26,44 @@ spring:
       settings:
         web-allow-others: true
 
+jwt:
+  secret: local-dev-secret-key-for-jwt-token-minimum-256-bits-required-here
+  access-token-validity: 3600000      # 1시간 (밀리초)
+  refresh-token-validity: 604800000   # 7일 (밀리초)
+
 logging:
   level:
     org.hibernate.SQL: debug
     org.springframework.transaction: trace
     org.springframework.transaction.interceptor: trace
     org.springframework.orm.jpa: debug
+
+---
+# MySQL 환경 (Docker)
+spring:
+  config:
+    activate:
+      on-profile: mysql
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:healthy_db}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: ${MYSQL_USER:healthy_user}
+    password: ${MYSQL_PASSWORD:healthy_pass}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+    show-sql: true
+
+jwt:
+  secret: ${JWT_SECRET:production-secret-key-should-be-changed-in-real-environment-min-256-bits}
+  access-token-validity: ${JWT_ACCESS_VALIDITY:3600000}
+  refresh-token-validity: ${JWT_REFRESH_VALIDITY:604800000}
+
+logging:
+  level:
+    org.hibernate.SQL: debug
+    org.springframework.transaction: debug

@@ -58,7 +58,7 @@ class AuthServiceTest {
 
             // when
             ResponseEntity<AuthResponses.SignupResponse> response = restTemplate.exchange(
-                    baseUrl + "/api/members/join",
+                    baseUrl + "/api/auth/signup",
                     HttpMethod.POST,
                     entity,
                     AuthResponses.SignupResponse.class
@@ -83,7 +83,7 @@ class AuthServiceTest {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<JoinRequest> firstEntity = new HttpEntity<>(firstRequest, headers);
-            restTemplate.exchange(baseUrl + "/api/members/join", HttpMethod.POST, firstEntity, AuthResponses.SignupResponse.class);
+            restTemplate.exchange(baseUrl + "/api/auth/signup", HttpMethod.POST, firstEntity, AuthResponses.SignupResponse.class);
 
             // 중복 이메일로 가입 시도
             JoinRequest duplicateRequest = new JoinRequest("duplicate@example.com", "password456", "두번째");
@@ -91,7 +91,7 @@ class AuthServiceTest {
 
             // when
             ResponseEntity<Map> response = restTemplate.exchange(
-                    baseUrl + "/api/members/join",
+                    baseUrl + "/api/auth/signup",
                     HttpMethod.POST,
                     duplicateEntity,
                     Map.class
@@ -116,7 +116,7 @@ class AuthServiceTest {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<JoinRequest> joinEntity = new HttpEntity<>(joinRequest, headers);
-            restTemplate.exchange(baseUrl + "/api/members/join", HttpMethod.POST, joinEntity, AuthResponses.SignupResponse.class);
+            restTemplate.exchange(baseUrl + "/api/auth/signup", HttpMethod.POST, joinEntity, AuthResponses.SignupResponse.class);
 
             // 로그인 시도
             LoginRequest loginRequest = new LoginRequest("login@example.com", "password123");
@@ -134,6 +134,11 @@ class AuthServiceTest {
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
             assertThat(response.getBody()).isNotNull();
             assertThat(response.getBody().getAccessToken()).isNotBlank();
+            assertThat(response.getBody().getRefreshToken()).isNotBlank();
+            assertThat(response.getBody().getAccessTokenExpiresIn()).isGreaterThan(0);
+            assertThat(response.getBody().getRefreshTokenExpiresIn()).isGreaterThan(0);
+            assertThat(response.getBody().getUser()).isNotNull();
+            assertThat(response.getBody().getUser().getEmail()).isEqualTo("login@example.com");
         }
 
         @Test
@@ -167,7 +172,7 @@ class AuthServiceTest {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<JoinRequest> joinEntity = new HttpEntity<>(joinRequest, headers);
-            restTemplate.exchange(baseUrl + "/api/members/join", HttpMethod.POST, joinEntity, AuthResponses.SignupResponse.class);
+            restTemplate.exchange(baseUrl + "/api/auth/signup", HttpMethod.POST, joinEntity, AuthResponses.SignupResponse.class);
 
             // 잘못된 비밀번호로 로그인 시도
             LoginRequest loginRequest = new LoginRequest("wrongpw@example.com", "wrongPassword");
@@ -195,32 +200,48 @@ class AuthServiceTest {
         @Test
         @DisplayName("토큰 갱신 성공")
         void refreshTokenSuccess() {
-            // given
-            RefreshTokenRequest request = new RefreshTokenRequest("valid-refresh-token", "device-123");
+            // given - 먼저 회원가입 및 로그인
+            JoinRequest joinRequest = new JoinRequest("refresh@example.com", "password123", "홍길동");
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            HttpEntity<RefreshTokenRequest> entity = new HttpEntity<>(request, headers);
+            HttpEntity<JoinRequest> joinEntity = new HttpEntity<>(joinRequest, headers);
+            restTemplate.exchange(baseUrl + "/api/auth/signup", HttpMethod.POST, joinEntity, AuthResponses.SignupResponse.class);
+
+            LoginRequest loginRequest = new LoginRequest("refresh@example.com", "password123");
+            HttpEntity<LoginRequest> loginEntity = new HttpEntity<>(loginRequest, headers);
+            ResponseEntity<AuthResponses.LoginResponse> loginResponse = restTemplate.exchange(
+                    baseUrl + "/api/auth/login",
+                    HttpMethod.POST,
+                    loginEntity,
+                    AuthResponses.LoginResponse.class
+            );
+
+            String refreshToken = loginResponse.getBody().getRefreshToken();
+
+            // 토큰 갱신 요청
+            RefreshTokenRequest refreshRequest = new RefreshTokenRequest(refreshToken, "device-123");
+            HttpEntity<RefreshTokenRequest> refreshEntity = new HttpEntity<>(refreshRequest, headers);
 
             // when
-            ResponseEntity<Map> response = restTemplate.exchange(
+            ResponseEntity<AuthResponses.LoginResponse> response = restTemplate.exchange(
                     baseUrl + "/api/auth/token/refresh",
                     HttpMethod.POST,
-                    entity,
-                    Map.class
+                    refreshEntity,
+                    AuthResponses.LoginResponse.class
             );
 
             // then
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
             assertThat(response.getBody()).isNotNull();
-            assertThat(response.getBody().get("success")).isEqualTo(true);
-            assertThat(response.getBody().get("tokens")).isNotNull();
+            assertThat(response.getBody().getAccessToken()).isNotBlank();
+            assertThat(response.getBody().getRefreshToken()).isNotBlank();
         }
 
         @Test
         @DisplayName("토큰 갱신 실패 - 유효하지 않은 토큰")
         void refreshTokenFailInvalidToken() {
             // given
-            RefreshTokenRequest request = new RefreshTokenRequest("invalid", "device-123");
+            RefreshTokenRequest request = new RefreshTokenRequest("invalid-token", "device-123");
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<RefreshTokenRequest> entity = new HttpEntity<>(request, headers);
@@ -236,8 +257,7 @@ class AuthServiceTest {
             // then
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
             assertThat(response.getBody()).isNotNull();
-            assertThat(response.getBody().get("success")).isEqualTo(false);
-            assertThat(response.getBody().get("message")).isEqualTo("INVALID_REFRESH_TOKEN");
+            assertThat(response.getBody().get("code")).isEqualTo("INVALID_CREDENTIALS");
         }
     }
 }

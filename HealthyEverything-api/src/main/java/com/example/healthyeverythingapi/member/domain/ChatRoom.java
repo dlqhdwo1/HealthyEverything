@@ -38,4 +38,20 @@ public class ChatRoom {
 
     @Column
     private int unreadCount;
+
+    // 마지막 메시지 업데이트
+    public void updateLastMessage(String message, String messageAt) {
+        this.lastMessage = message;
+        this.lastMessageAt = messageAt;
+    }
+
+    // 읽지 않은 메시지 증가
+    public void incrementUnreadCount() {
+        this.unreadCount++;
+    }
+
+    // 읽음 처리
+    public void resetUnreadCount() {
+        this.unreadCount = 0;
+    }
 }
